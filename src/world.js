@@ -273,6 +273,7 @@ function main() {
 
         //extra blocks
         makeInstance("cube", null, 0xFFD700, 0, 6, 0),
+        makeInstance("pyramid", null, 0xFFD700, 0, 7.5, 0, true).scale.set(.7, .7, .7),
         makeInstance("cube", null, 0x808080, 2, 5, 0),
         makeInstance("cube", null, 0x808080, -2, 1, 0),
 
