@@ -131,8 +131,8 @@ function main() {
         shape.position.set(x, y +0.5 , z);
 
         //store animated objects
-        if(a){
-            animated.push(shape);
+        if (a) {
+            animated.push({ object: shape, initialY: shape.position.y });
         }
     
         return shape;
@@ -174,7 +174,7 @@ function main() {
         makeInstance("cube", null, 0x808080, 2, 5, 0),
         makeInstance("cube", null, 0x808080, -2, 1, 0),
 
-        makeInstance("cube", null, 0xFFD700, 1, 2, 1, true),
+        makeInstance("cube", null, 0xFFD700, 1, 1.5, 1, true),
 
         makeInstance("sphere", null, 0x08B6CE, -1, 1, 2, true),
 
@@ -205,9 +205,9 @@ function main() {
 		time *= 0.001;
 
         //move all animated objects
-        animated.forEach(obj => {
-            obj.rotation.y += 0.05; // Spin around Y-axis
-            obj.position.y = Math.sin(time * 2) * 0.5 +2; // Move up and down
+        animated.forEach(entry => {
+            entry.object.rotation.y += 0.05; // Spin around Y-axis
+            entry.object.position.y = entry.initialY + Math.sin(time * 2) * 0.5; // Move up and down
         });
 
         //render
