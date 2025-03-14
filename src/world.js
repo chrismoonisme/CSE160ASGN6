@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 
 function main() {
 
@@ -14,7 +15,7 @@ function main() {
     const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     //set position of camera
-    camera.position.set(0,10,20);
+    camera.position.set(0,10,25);
 
     //minmax helper class
     class MinMaxGUIHelper {
@@ -85,13 +86,87 @@ function main() {
     obsidian.colorSpace = THREE.SRGBColorSpace;
     const nether = loader.load( '/resources/nether.jpg' );
     nether.colorSpace = THREE.SRGBColorSpace;
+    const magma = loader.load( '/resources/magma.jpg' );
+    magma.colorSpace = THREE.SRGBColorSpace;
 
-    //light
-    const color = 0xFFFFFF;
-    const intensity = 3;
-    const light = new THREE.DirectionalLight(color, intensity);
-    light.position.set(-1, 2, 4);
-    scene.add(light);
+    const texture = loader.load(
+        '/resources/nightsky.jpg',
+        () => {
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          scene.background = texture;
+        }
+    );
+
+    //directional light
+    const dcolor = 0xFFFFFF;
+    const dintensity = 3;
+    const dlight = new THREE.DirectionalLight(dcolor, dintensity);
+    dlight.position.set(-1, 2, 4);
+    scene.add(dlight);
+
+    //ambient light gui helper class
+    class ColorGUIHelper {
+
+		constructor( object, prop ) {
+
+			this.object = object;
+			this.prop = prop;
+
+		}
+		get value() {
+
+			return `#${this.object[ this.prop ].getHexString()}`;
+
+		}
+		set value( hexString ) {
+
+			this.object[ this.prop ].set( hexString );
+
+		}
+
+	}
+
+    //ambient light
+    const acolor = 0xd9268e;
+    const aintensity = 3;
+    const alight = new THREE.AmbientLight(acolor, aintensity);
+    scene.add(alight);
+
+    const agui = new GUI();
+	gui.addColor( new ColorGUIHelper( alight, 'color' ), 'value' ).name( 'ambient color' );
+	gui.add( alight, 'intensity', 0, 5, 0.01 ).name( 'ambient intensity' );
+
+    //point lights
+    //const pcolor = 0xFF6600;
+    //const pintensity = 150;
+    //const plight = new THREE.PointLight(pcolor, pintensity);
+    //plight.position.set(2, 0.5, 2);
+    //scene.add(plight);
+
+    //const plight2 = new THREE.PointLight(pcolor, pintensity);
+    //plight2.position.set(-1, 0.5, -1);
+    //scene.add(plight2);
+
+
+    //rock model
+    const objLoader = new OBJLoader();
+    objLoader.load('/resources/rockFlat.obj', (rock) => {
+
+        //scale and pos
+        rock.scale.set(7, 20, 7); 
+        rock.position.set(0, -3.3, 0); 
+
+        //color
+        rock.traverse((child) => {
+            if (child.isMesh) {
+                child.material = new THREE.MeshPhongMaterial({ color: 0x808080 }); // Gray color
+            }
+        });
+
+        scene.add(rock);
+    });
+
 
     //create a shape in the scene
     const animated = [];
@@ -108,7 +183,7 @@ function main() {
             case "sphere":
                 geometry = new THREE.SphereGeometry(0.5, 32, 32);
                 break;
-            case "pyramid": // A pyramid is a Tetrahedron in Three.js
+            case "pyramid": 
                 geometry = new THREE.TetrahedronGeometry(1);
                 break;
             default:
@@ -138,16 +213,43 @@ function main() {
         return shape;
     }
 
+    //magma block (glowing)
+    function glowblock(x, y, z){
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        
+        const material = new THREE.MeshPhongMaterial({ 
+            map: magma, 
+            emissive: 0xFF6600,
+            emissiveMap: magma, 
+            emissiveIntensity: 50
+        });        
+        
+        const cube = new THREE.Mesh(geometry, material);
+    
+        //point light
+        const light = new THREE.PointLight(0xFF6600, 150, 10);
+        light.position.set(0, 0, 0);
+        light.castShadow = true;
+    
+        cube.add(light);
+    
+        cube.position.set(x, y + 0.5, z);
+    
+        scene.add(cube);
+        return cube;
+    }
+
     //all basic shapes
     const cubes = [
 
         makeInstance("cube", nether, null, 2, 0, 1),
-        makeInstance("cube", nether, null, 2, 0, 2),
+        glowblock(2, 0, 2),
         makeInstance("cube", nether, null, 1, 0, 1),
         makeInstance("cube", nether, null, 2, 0, -1),
         makeInstance("cube", nether, null, 1, 0, -1),
         makeInstance("cube", nether, null, 0, 0, -1),
-        makeInstance("cube", nether, null, -1, 0, -1),
+        glowblock(-1, 0, -1),
         makeInstance("cube", nether, null, 3, 0, 0),
 
        
@@ -174,8 +276,7 @@ function main() {
         makeInstance("cube", null, 0x808080, 2, 5, 0),
         makeInstance("cube", null, 0x808080, -2, 1, 0),
 
-        makeInstance("cube", null, 0xFFD700, 1, 1.5, 1, true),
-
+        makeInstance("cube", null, 0xFFD700, 1, 1.5, 1, true).scale.set(.7, .7, .7),
         makeInstance("sphere", null, 0x08B6CE, -1, 1, 2, true),
 
 
@@ -183,19 +284,24 @@ function main() {
         //bottom
         makeInstance("cube", obsidian, null, 1, 1, 0),
         makeInstance("cube", obsidian, null, 0, 1, 0),
+
+        //makeInstance("cube", null, 0x808080, 0, -25.5, 0).scale.set(7, 50, 7)
+
+
+
         
 
     ];
 
     //ground plane
-    const planeSize = 20;
+    const planeSize = 40;
     const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
     const planeMat = new THREE.MeshPhongMaterial({ color: 0x888888, side: THREE.DoubleSide });
     const ground = new THREE.Mesh(planeGeo, planeMat);
     ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
     ground.position.y = 0; // Position at the bottom
     ground.receiveShadow = true; // Enable shadows
-    scene.add(ground);
+    //scene.add(ground);
 
 
 
