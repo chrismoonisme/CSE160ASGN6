@@ -82,15 +82,15 @@ function main() {
 
     //texture loader
     const loader = new THREE.TextureLoader();
-    const obsidian = loader.load( '/resources/obsidian.jpg' );
+    const obsidian = loader.load( '../resources/obsidian.jpg' );
     obsidian.colorSpace = THREE.SRGBColorSpace;
-    const nether = loader.load( '/resources/nether.jpg' );
+    const nether = loader.load( '../resources/nether.jpg' );
     nether.colorSpace = THREE.SRGBColorSpace;
-    const magma = loader.load( '/resources/magma.jpg' );
+    const magma = loader.load( '../resources/magma.jpg' );
     magma.colorSpace = THREE.SRGBColorSpace;
 
     const texture = loader.load(
-        '/resources/nightsky.jpg',
+        '../resources/nightsky.jpg',
         () => {
           texture.mapping = THREE.EquirectangularReflectionMapping;
           texture.colorSpace = THREE.SRGBColorSpace;
@@ -151,7 +151,7 @@ function main() {
 
     //rock model
     const objLoader = new OBJLoader();
-    objLoader.load('/resources/rockFlat.obj', (rock) => {
+    objLoader.load('../resources/rockFlat.obj', (rock) => {
 
         //scale and pos
         rock.scale.set(7, 20, 7); 
