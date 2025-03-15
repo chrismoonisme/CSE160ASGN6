@@ -8,7 +8,7 @@ function main() {
     //get canvas
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({antialias: true, canvas});
-    //camera
+    //persepctive camera
     const fov = 30;
     const aspect = 2;  // the canvas default
     const near = 0.1;
@@ -65,6 +65,8 @@ function main() {
 	const minMaxGUIHelper = new MinMaxGUIHelper( camera, 'near', 'far', 0.1 );
 	gui.add( minMaxGUIHelper, 'min', 0.1, 50, 0.1 ).name( 'near' ).onChange( updateCamera );
 	gui.add( minMaxGUIHelper, 'max', 0.1, 50, 0.1 ).name( 'far' ).onChange( updateCamera );
+    //gui.add(controls, 'enableDamping').name('Enable Damping');
+    //gui.add(controls, 'autoRotate').name('Auto Rotate');
 
     //orbitals
 	const controls = new OrbitControls( camera, canvas );
@@ -74,6 +76,110 @@ function main() {
 
     //scene
     const scene = new THREE.Scene();
+    
+    //billboard specs
+    function makeLabelCanvas(baseWidth, size, name) {
+        const borderSize = 10;
+        const padding = 30;
+        const lineHeight = size * 1.2;
+        const indent = 30;
+        const radius = 8;
+    
+        const ctx = document.createElement('canvas').getContext('2d');
+        const font = `${size}px 'Press Start 2P', sans-serif`;
+        ctx.font = font;
+    
+        let lines;
+        if (typeof name === "string") {
+            lines = name.split("\n").map(text => ({ text, color: "white" })); // Default color white
+        } else {
+            lines = name; 
+        }
+    
+        const textWidth = Math.max(...lines.map(line => ctx.measureText(line.text).width));
+        const doubleBorderSize = borderSize * 2;
+        const width = textWidth + doubleBorderSize + padding * 2;
+        const height = (lineHeight * lines.length) + doubleBorderSize + padding;
+    
+        ctx.canvas.width = width;
+        ctx.canvas.height = height;
+    
+        ctx.font = font;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+    
+        ctx.fillStyle = "#555555"; 
+        ctx.strokeStyle = "#2c333f"; 
+        ctx.lineWidth = borderSize;
+    
+        ctx.beginPath();
+        ctx.moveTo(borderSize + radius, borderSize);
+        ctx.arcTo(width - borderSize, borderSize, width - borderSize, height - borderSize, radius);
+        ctx.arcTo(width - borderSize, height - borderSize, borderSize, height - borderSize, radius);
+        ctx.arcTo(borderSize, height - borderSize, borderSize, borderSize, radius);
+        ctx.arcTo(borderSize, borderSize, width - borderSize, borderSize, radius);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    
+        ctx.fillStyle = "#212121"; 
+        ctx.beginPath();
+        ctx.moveTo(borderSize + radius, borderSize);
+        ctx.arcTo(width - borderSize, borderSize, width - borderSize, height - borderSize, radius);
+        ctx.arcTo(width - borderSize, height - borderSize, borderSize, height - borderSize, radius);
+        ctx.arcTo(borderSize, height - borderSize, borderSize, borderSize, radius);
+        ctx.arcTo(borderSize, borderSize, width - borderSize, borderSize, radius);
+        ctx.closePath();
+        ctx.fill();
+    
+        lines.forEach((line, i) => {
+            ctx.fillStyle = line.color; 
+            ctx.fillText(line.text, borderSize + indent, borderSize + padding + (i * lineHeight));
+        });
+    
+        return ctx.canvas;
+    }
+    
+    //set a billboard
+    function makeLabel(x, y, z, labelWidth, size, phrases) {
+        const canvas = makeLabelCanvas(labelWidth, size, phrases);        
+        
+        const texture = new THREE.CanvasTexture(canvas);
+
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        texture.minFilter = THREE.LinearFilter;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+
+        const labelMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+        });
+
+        const label = new THREE.Sprite(labelMaterial);
+        label.position.set(x, y, z);
+
+        const labelBaseScale = 0.01;
+        label.scale.x = canvas.width * labelBaseScale;
+        label.scale.y = canvas.height * labelBaseScale;
+
+        scene.add(label);
+        return label;
+    }
+
+    //make some billboards
+    makeLabel(-5, 5, 0, 150, 32, [
+        { text: "Ruined Portal", color: "yellow" },
+        { text: "by Chris", color: "white" }
+    ]);
+
+    makeLabel(-5, 3.4, 0, 150, 32, [
+        { text: "CSE 160", color: "#bd39aa" },
+        { text: "Final Project", color: "white" }
+    ]);
+
+
 
     //material
     const material = new THREE.MeshPhongMaterial({
@@ -129,7 +235,7 @@ function main() {
 
     //ambient light
     const acolor = 0xd9268e;
-    const aintensity = 3;
+    const aintensity = 2;
     const alight = new THREE.AmbientLight(acolor, aintensity);
     scene.add(alight);
 
