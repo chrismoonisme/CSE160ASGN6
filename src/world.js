@@ -206,45 +206,62 @@ function main() {
         }
     );
 
-    //directional light
+
+    //ambient helper class
+    class ColorGUIHelper {
+        constructor(object, prop) {
+            this.object = object;
+            this.prop = prop;
+        }
+        get value() {
+            return `#${this.object[this.prop].getHexString()}`;
+        }
+        set value(hexString) {
+            this.object[this.prop].set(hexString);
+        }
+    }
+
+    //ambient
+    const acolor = 0xd9268e;
+    const aintensity = 2;
+    const alight = new THREE.AmbientLight(acolor, aintensity);
+    scene.add(alight);
+
+    //ambient gui
+    const ambientFolder = gui.addFolder('Ambient Light');
+    ambientFolder.addColor(new ColorGUIHelper(alight, 'color'), 'value').name('Color');
+    ambientFolder.add(alight, 'intensity', 0, 5, 0.01).name('Intensity');
+    ambientFolder.open();
+
+    //directional
     const dcolor = 0xFFFFFF;
     const dintensity = 3;
     const dlight = new THREE.DirectionalLight(dcolor, dintensity);
     dlight.position.set(-1, 2, 4);
     scene.add(dlight);
 
-    //ambient light gui helper class
-    class ColorGUIHelper {
+    //directional gui
+    const lightFolder = gui.addFolder('Directional Light');
+    const lightControls = {
+        color: dlight.color.getHex(),
+        intensity: dlight.intensity,
+        x: dlight.position.x,
+        y: dlight.position.y,
+        z: dlight.position.z,
+    };
 
-		constructor( object, prop ) {
+    //color
+    lightFolder.addColor(new ColorGUIHelper(dlight, 'color'), 'value').name('Color');
 
-			this.object = object;
-			this.prop = prop;
+    //intensity 
+    lightFolder.add(dlight, 'intensity', 0, 10, 0.1).name('Intensity');
 
-		}
-		get value() {
+    //position 
+    lightFolder.add(dlight.position, 'x', -10, 10, 0.1).name('Position X');
+    lightFolder.add(dlight.position, 'y', -10, 10, 0.1).name('Position Y');
+    lightFolder.add(dlight.position, 'z', -10, 10, 0.1).name('Position Z');
 
-			return `#${this.object[ this.prop ].getHexString()}`;
-
-		}
-		set value( hexString ) {
-
-			this.object[ this.prop ].set( hexString );
-
-		}
-
-	}
-
-    //ambient light
-    const acolor = 0xd9268e;
-    const aintensity = 2;
-    const alight = new THREE.AmbientLight(acolor, aintensity);
-    scene.add(alight);
-
-    const agui = new GUI();
-	gui.addColor( new ColorGUIHelper( alight, 'color' ), 'value' ).name( 'ambient color' );
-	gui.add( alight, 'intensity', 0, 5, 0.01 ).name( 'ambient intensity' );
-
+    lightFolder.open();
     //point lights
     //const pcolor = 0xFF6600;
     //const pintensity = 150;
