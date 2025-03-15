@@ -10,7 +10,7 @@ function main() {
     const renderer = new THREE.WebGLRenderer({antialias: true, canvas});
     //persepctive camera
     const fov = 30;
-    const aspect = 2;  // the canvas default
+    const aspect = 2;  
     const near = 0.1;
     const far = 100;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -194,6 +194,8 @@ function main() {
     nether.colorSpace = THREE.SRGBColorSpace;
     const magma = loader.load( '../resources/magma.jpg' );
     magma.colorSpace = THREE.SRGBColorSpace;
+    const fire = loader.load( '../resources/fire.png' );
+    fire.colorSpace = THREE.SRGBColorSpace;
 
     const texture = loader.load(
         '../resources/nightsky.jpg',
@@ -343,8 +345,112 @@ function main() {
         cube.position.set(x, y + 0.5, z);
     
         scene.add(cube);
+
+        const sparks = createSparks(x, y + 0.3, z);
+
         return cube;
     }
+
+    function createSparks(x, y, z) {
+
+        //rand 1-3
+        let particleCount = Math.floor(Math.random() * 3) + 1;
+        let geometry = new THREE.BufferGeometry();
+        let positions, velocities;
+        
+        //reset func
+        function resetSparks() {
+
+            //reset particle count
+            particleCount = Math.floor(Math.random() * 3) + 1;
+
+            positions = new Float32Array(particleCount * 3);
+            velocities = new Float32Array(particleCount * 3);
+            
+            //for each
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = 0;
+                positions[i3 + 1] = 0;
+                positions[i3 + 2] = 0;
+    
+                velocities[i3] = (Math.random() - 0.5) * 0.03;
+                velocities[i3 + 1] = Math.random() * 0.1 + 0.1;
+                velocities[i3 + 2] = (Math.random() - 0.5) * 0.03;
+            }
+    
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+            geometry.attributes.position.needsUpdate = true;
+        }
+        
+        //inital reset
+        resetSparks();
+        
+        //particle fire texture
+        const material = new THREE.PointsMaterial({
+            map: fire,
+            size: 4,
+            transparent: true,
+            opacity: 1,
+            blending: THREE.AdditiveBlending,
+        });
+    
+        const sparks = new THREE.Points(geometry, material);
+        sparks.position.set(x, y, z);
+        scene.add(sparks);
+        
+        //animate falling
+        function animateSparks() {
+            const positions = sparks.geometry.attributes.position.array;
+            const velocities = sparks.geometry.attributes.velocity.array;
+            let allSparksFallen = true;
+    
+            //for each particle
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+    
+                positions[i3] += velocities[i3];
+                positions[i3 + 1] += velocities[i3 + 1];
+                positions[i3 + 2] += velocities[i3 + 2];
+                
+                //make particles fall
+                velocities[i3 + 1] -= 0.005; 
+    
+                //check if this spark is still above the threshold
+                if (positions[i3 + 1] >= -0.3) {
+                    allSparksFallen = false;
+                }
+            }
+    
+            sparks.geometry.attributes.position.needsUpdate = true;
+    
+            if (allSparksFallen) {
+
+                //random delay
+                let waitTime = Math.random() * 800 + 200; 
+                setTimeout(() => {
+
+                    //reset sparks (new amount)
+                    resetSparks();   
+                    
+                    //reset animation
+                    animateSparks();   
+
+                }, waitTime);
+
+            }else{
+
+                requestAnimationFrame(animateSparks);
+
+            }
+        }
+    
+        animateSparks();
+        return sparks;
+
+    }
+    
 
     //all basic shapes
     const cubes = [
@@ -386,18 +492,11 @@ function main() {
         makeInstance("cube", null, 0xFFD700, 1, 1.5, 1, true).scale.set(.7, .7, .7),
         makeInstance("sphere", null, 0x08B6CE, -1, 1, 2, true),
 
-
-
         //bottom
         makeInstance("cube", obsidian, null, 1, 1, 0),
         makeInstance("cube", obsidian, null, 0, 1, 0),
 
         //makeInstance("cube", null, 0x808080, 0, -25.5, 0).scale.set(7, 50, 7)
-
-
-
-        
-
     ];
 
     //ground plane
