@@ -8,6 +8,7 @@ function main() {
     //get canvas
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({antialias: true, canvas});
+
     //persepctive camera
     const fov = 30;
     const aspect = 2;  
@@ -16,6 +17,18 @@ function main() {
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     //set position of camera
     camera.position.set(0,10,25);
+
+    //fit screen
+    function resizeRendererToDisplaySize(){
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+    }
+    //resize
+    window.addEventListener('resize', resizeRendererToDisplaySize);
+    
 
     //minmax helper class
     class MinMaxGUIHelper {
@@ -54,7 +67,7 @@ function main() {
 	}
 
     //update camera
-    function updateCamera() {
+    function updateCamera(){
 
 		camera.updateProjectionMatrix();
 
@@ -76,9 +89,12 @@ function main() {
 
     //scene
     const scene = new THREE.Scene();
+
+    //resizeRendererToDisplaySize();
+
     
     //billboard specs
-    function makeLabelCanvas(baseWidth, size, name) {
+    function makeLabelCanvas(baseWidth, size, name){
         const borderSize = 10;
         const padding = 30;
         const lineHeight = size * 1.2;
@@ -141,7 +157,7 @@ function main() {
     }
     
     //set a billboard
-    function makeLabel(x, y, z, labelWidth, size, phrases) {
+    function makeLabel(x, y, z, labelWidth, size, phrases){
         const canvas = makeLabelCanvas(labelWidth, size, phrases);        
         
         const texture = new THREE.CanvasTexture(canvas);
@@ -540,6 +556,8 @@ function main() {
         });
 
         //render
+        resizeRendererToDisplaySize();
+
 		renderer.render( scene, camera );
 		requestAnimationFrame( render );
 
